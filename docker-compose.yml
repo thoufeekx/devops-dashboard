@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Backend Service
+  backend:
+    build:
+      context: ./devops-dashboard-backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - JENKINS_URL=http://jenkins:8080
+    depends_on:
+      - jenkins
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./devops-dashboard-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:3001
+    depends_on:
+      - backend
+
+  # Example Project Service
+  example-project:
+    build:
+      context: ./devops-example-project
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+
+  # Jenkins Service
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    environment:
+      - JENKINS_OPTS="--prefix=/jenkins"
+
+volumes:
+  jenkins_home:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
